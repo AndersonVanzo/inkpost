@@ -7,6 +7,7 @@ struct Cli {
     url: String,
 }
 
+#[derive(Debug)]
 struct Params {
     username: String,
     slug: String,
@@ -58,4 +59,109 @@ fn main() {
 
     println!("username: {}", params.username);
     println!("slug: {}", params.slug);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_parse_https_url() {
+        let parse = parse_params("https://dev.to/ben/some-post").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_parse_http_url() {
+        let parse = parse_params("http://dev.to/ben/some-post").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_parse_no_scheme() {
+        let parse = parse_params("dev.to/ben/some-post").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_accept_trailing_slash() {
+        let parse = parse_params("dev.to/ben/some-post/").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_accept_query_params() {
+        let parse =
+            parse_params("dev.to/ben/some-post?utm_source=xyz").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_accept_fragments() {
+        let parse =
+            parse_params("dev.to/ben/some-post#comments").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_accept_extra_params() {
+        let parse =
+            parse_params("dev.to/ben/some-post/comments").expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_accept_fragments_params_and_query_params() {
+        let parse = parse_params("dev.to/ben/some-post/comments?utm_source=xyz#comments")
+            .expect("parse_params should pass");
+        assert_eq!(parse.username, "ben");
+        assert_eq!(parse.slug, "some-post");
+    }
+
+    #[test]
+    fn should_reject_slug_missing() {
+        parse_params("dev.to/ben").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_only_doman() {
+        parse_params("dev.to").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_username_missing() {
+        parse_params("dev.to//some-post").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_empty_slug() {
+        parse_params("dev.to/username//").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_wrong_site() {
+        parse_params("example.to/username/some-post").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_wrong_site_with_few_arguments() {
+        parse_params("example.to/username").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_look_alike_doman() {
+        parse_params("dev.to.invalid/username/some-post").unwrap_err();
+    }
+
+    #[test]
+    fn should_reject_empty_url() {
+        parse_params("").unwrap_err();
+    }
 }
