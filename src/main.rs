@@ -1,4 +1,5 @@
 mod forem;
+mod html_sanitizer;
 
 use clap::Parser;
 
