@@ -1,5 +1,6 @@
 [package]
 name = "inkpost"
+description = "Save DEV Community posts to your e-reader"
 version = "0.1.0"
 edition = "2024"
 
